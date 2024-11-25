@@ -18,14 +18,17 @@ def get_door():
         })
     return json_list
 
-def add_user(name, email, password, avatar_path, address, phonenum, user_role=UserRole.USER, door_id="None"):
+def add_user(name, email, avatar_path, address, phonenum, user_role=UserRole.USER, door_id="None"):
 
     try:
-        password = str(hashlib.sha256(password.encode('utf-8')).hexdigest())
-        user = User(name=name, email=email, password=password, avatar=avatar_path,
+        user = User(name=name, email=email, avatar=avatar_path,
                     user_role=user_role, phone_num=phonenum, address=address)
         ticket= Ticket(use_id=user.id, door_id=door_id)
-        db.session.add(user)
+        a = User.query.filter(User.email.__eq__(email))
+        user_id = user.id
+        if len(a) == 0:
+            db.session.add(user)
+            user_id = a[0].id
         db.session.add(ticket)
         db.session.commit()
 
@@ -36,7 +39,7 @@ def add_user(name, email, password, avatar_path, address, phonenum, user_role=Us
 
         header = {"X-API-Key": "Ptit@2024ReCognizeFace"}
         payload = {
-            "registration_id": user.id,
+            "registration_id": user_id,
             "avatar_base64": image_base64,
             "event_id": door_id
         }
@@ -78,10 +81,20 @@ def delete_au(user_id, door_id):
     response = requests.post("https://localhost:8080/api/delete", headers=header, json=payload)
     return response
 
+def get_all_user():
+    results = db.session.query(User, Ticket).join(Order, User.id == Ticket.user_id).all()
+    json_list = []
+    for user, ticket in results:
+        json_list.append({
+            "user_name": user.name,
+            "door_id": ticket.door_id,
+            "address": user.address,
+            "phone_num": user.phone_num
+        })
+
 if __name__ == "__main__":
     name = "Nhân admin"
     email = "admin@gmail.com"
-    password = "123456"
     avatar_path = "static/image/deafaut_avatar.jpg"
     address = "Yen Nhan"
     phonenum = "01234556"

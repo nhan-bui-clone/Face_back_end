@@ -46,12 +46,11 @@ def register():
 # Lấy các trường từ JSON
     name = data.get("name")
     email = data.get("email")
-    password = data.get("password", "").strip()
-    cpass = data.get("confirm_password", "").strip()
     address = data.get("address", "").strip()
     phonenum = data.get("phonenum")
     avatar_path = "https://res.cloudinary.com/dscod7nw4/image/upload/v1708148084/qi3ttkumhoogbhew8ae6.jpg"
     avatar = data.get("avatar")
+    door_id = data.get("door_id")
 
     if avatar:
         res = cloudinary.uploader.upload(avatar)
@@ -61,11 +60,17 @@ def register():
         return jsonify({"status": "fail"}), 402
 
     try:
-        utils.add_user(name=name, email=email, password=password, avatar_path=avatar_path,
-                       address=address, phonenum=phonenum)
+        utils.add_user(name=name, email=email, avatar_path=avatar_path,
+                       address=address, phonenum=phonenum, door_id=door_id)
         return jsonify({"status": "sucess"}), 200
     except Exception as e:
         return jsonify({"status": "fail"}), 500
+
+
+@app.route("/get_user")
+def user_manager():
+    result = utils.get_all_user()
+    return jsonify(result), 200
 
 
 @app.route("/delete")
@@ -94,7 +99,6 @@ def user_load(user_id):
 def log_out():
     logout_user()
     return redirect(url_for('home'))
-
 
 
 if __name__ == "__main__":
